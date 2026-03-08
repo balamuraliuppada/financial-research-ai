@@ -4,7 +4,7 @@ import plotly.graph_objs as go
 import redis
 import pandas as pd
 from database import create_table, save_search
-
+from logger import log_api_call, log_api_error
 
 create_table()
 try:
@@ -50,6 +50,7 @@ def get_stock_data(symbol, period):
             return pd.read_json(cached_data)
 
     stock = yf.Ticker(symbol)
+    log_api_call(symbol, period)
     data = stock.history(period=period)
 
     if redis_client is not None:
@@ -64,7 +65,7 @@ try:
 
     data = get_stock_data(symbol, period)
     save_search(symbol, period)
-    
+
     if data.empty:
         st.warning("⚠ No stock data available for this symbol or time range.")
         st.stop()
@@ -146,4 +147,5 @@ except ValueError:
     st.error("⚠ Invalid data received from the API.")
 
 except Exception as e:
+    log_api_error(e)
     st.error(f"⚠ Unexpected error occurred: {e}")
