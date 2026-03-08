@@ -7,7 +7,7 @@ from database import create_table, save_search
 from logger import log_api_call, log_api_error
 from streamlit_autorefresh import st_autorefresh
 
-st_autorefresh(interval=60000, key="datarefresh")
+st_autorefresh(interval=300000)
 
 create_table()
 try:
@@ -40,7 +40,7 @@ period = st.selectbox(
     ["1mo", "3mo", "6mo", "1y", "5y"]
 )
 
-
+@st.cache_data(ttl=300)
 def get_stock_data(symbol, period):
 
     cache_key = f"{symbol}_{period}"
