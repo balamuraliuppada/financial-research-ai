@@ -1,15 +1,22 @@
 import psycopg2
 
 def connect_db():
-    return psycopg2.connect(
-        host="localhost",
-        database="financial_ai",
-        user="postgres",
-        password="postgres"
-    )
+    try:
+        return psycopg2.connect(
+            host="localhost",
+            database="financial_ai",
+            user="postgres",
+            password="postgres"
+        )
+    except:
+        return None
 
 def create_table():
     conn = connect_db()
+
+    if conn is None:
+        return
+
     cur = conn.cursor()
 
     cur.execute("""
@@ -25,9 +32,13 @@ def create_table():
     cur.close()
     conn.close()
 
-
 def save_search(symbol, period):
+
     conn = connect_db()
+
+    if conn is None:
+        return
+
     cur = conn.cursor()
 
     cur.execute(
