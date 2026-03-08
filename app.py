@@ -5,6 +5,9 @@ import redis
 import pandas as pd
 from database import create_table, save_search
 from logger import log_api_call, log_api_error
+from streamlit_autorefresh import st_autorefresh
+
+st_autorefresh(interval=60000, key="datarefresh")
 
 create_table()
 try:
