@@ -6,7 +6,6 @@ st.set_page_config(page_title="Financial Research AI", layout="wide")
 
 st.title("Financial Research AI - Stock Dashboard")
 
-# Indian Stock Options
 stock_options = {
     "Reliance Industries": "RELIANCE.NS",
     "Tata Consultancy Services (TCS)": "TCS.NS",
@@ -22,85 +21,93 @@ selected_stock_name = st.selectbox(
 
 symbol = stock_options[selected_stock_name]
 
-try:
-    stock = yf.Ticker(symbol)
+period = st.selectbox(
+    "Select Time Range",
+    ["1mo", "3mo", "6mo", "1y", "5y"]
+)
 
-    period = st.selectbox(
-        "Select Time Range",
-        ["1mo", "3mo", "6mo", "1y", "5y"]
-    )
+try:
+
+    stock = yf.Ticker(symbol)
 
     data = stock.history(period=period)
 
     if data.empty:
-        st.error("❌ No data found.")
-    else:
-        info = stock.info
+        st.warning("⚠ No stock data available for this symbol or time range.")
+        st.stop()
 
-        company_name = info.get("longName", selected_stock_name)
-        market_cap = info.get("marketCap", "N/A")
-        volume = info.get("volume", "N/A")
+    info = stock.info
 
-        current_price = round(data["Close"].iloc[-1], 2)
-        previous_close = round(data["Close"].iloc[-2], 2)
+    company_name = info.get("longName", selected_stock_name)
+    market_cap = info.get("marketCap", "N/A")
+    volume = info.get("volume", "N/A")
 
-        price_change = round(current_price - previous_close, 2)
-        percent_change = round((price_change / previous_close) * 100, 2)
+    current_price = round(data["Close"].iloc[-1], 2)
+    previous_close = round(data["Close"].iloc[-2], 2)
 
-        period_high = round(data["High"].max(), 2)
-        period_low = round(data["Low"].min(), 2)
+    price_change = round(current_price - previous_close, 2)
+    percent_change = round((price_change / previous_close) * 100, 2)
 
-        st.subheader(f"{company_name} ({symbol})")
+    period_high = round(data["High"].max(), 2)
+    period_low = round(data["Low"].min(), 2)
 
-        col1, col2, col3 = st.columns(3)
+    st.subheader(f"{company_name} ({symbol})")
 
-        col1.metric(
-            "Current Price (₹)",
-            current_price,
-            f"{price_change} ({percent_change}%)"
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Current Price (₹)",
+        current_price,
+        f"{price_change} ({percent_change}%)"
+    )
+
+    col2.metric(f"{period} High", period_high)
+    col3.metric(f"{period} Low", period_low)
+
+    st.markdown("---")
+
+    col4, col5 = st.columns(2)
+    col4.write(f"**Market Cap:** {market_cap}")
+    col5.write(f"**Volume:** {volume}")
+
+    st.markdown("---")
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data["Close"],
+        mode='lines',
+        name='Closing Price'
+    ))
+
+    fig.update_layout(
+        title=f"{company_name} - Price Timeline",
+        xaxis_title="Date",
+        yaxis_title="Price (INR)",
+        template="plotly_dark",
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1, label="1M", step="month", stepmode="backward"),
+                    dict(count=3, label="3M", step="month", stepmode="backward"),
+                    dict(count=6, label="6M", step="month", stepmode="backward"),
+                    dict(count=1, label="1Y", step="year", stepmode="backward"),
+                    dict(step="all")
+                ])
+            ),
+            rangeslider=dict(visible=True),
+            type="date"
         )
+    )
 
-        col2.metric(f"{period} High", period_high)
-        col3.metric(f"{period} Low", period_low)
+    st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("---")
+except yf.shared._exceptions.YFinanceError:
+    st.error("Failed to fetch stock data from Yahoo Finance API.")
 
-        col4, col5 = st.columns(2)
-        col4.write(f"**Market Cap:** {market_cap}")
-        col5.write(f"**Volume:** {volume}")
-
-        st.markdown("---")
-
-        fig = go.Figure()
-
-        fig.add_trace(go.Scatter(
-            x=data.index,
-            y=data["Close"],
-            mode='lines',
-            name='Closing Price'
-        ))
-
-        fig.update_layout(
-            title=f"{company_name} - Price Timeline",
-            xaxis_title="Date",
-            yaxis_title="Price (INR)",
-            template="plotly_dark",
-            xaxis=dict(
-                rangeselector=dict(
-                    buttons=list([
-                        dict(count=1, label="1M", step="month", stepmode="backward"),
-                        dict(count=3, label="3M", step="month", stepmode="backward"),
-                        dict(count=6, label="6M", step="month", stepmode="backward"),
-                        dict(count=1, label="1Y", step="year", stepmode="backward"),
-                        dict(step="all")
-                    ])
-                ),
-                rangeslider=dict(visible=True),
-                type="date"
-            )
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
+except ConnectionError:
+    st.error("Network error. Please check your internet connection.")
 
 except Exception as e:
-    st.error("⚠ Error fetching stock data.")
+    st.error("Unexpected error occurred while fetching stock data.")
