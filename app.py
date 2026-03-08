@@ -1,6 +1,17 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objs as go
+import redis
+import pandas as pd
+from database import create_table, save_search
+
+
+create_table()
+try:
+    redis_client = redis.Redis(host="localhost", port=6379, db=0)
+    redis_client.ping()
+except:
+    redis_client = None
 
 st.set_page_config(page_title="Financial Research AI", layout="wide")
 
@@ -26,12 +37,34 @@ period = st.selectbox(
     ["1mo", "3mo", "6mo", "1y", "5y"]
 )
 
+
+def get_stock_data(symbol, period):
+
+    cache_key = f"{symbol}_{period}"
+
+    if redis_client is not None:
+        cached_data = redis_client.get(cache_key)
+
+        if cached_data:
+            cached_data = cached_data.decode("utf-8")
+            return pd.read_json(cached_data)
+
+    stock = yf.Ticker(symbol)
+    data = stock.history(period=period)
+
+    if redis_client is not None:
+        redis_client.set(cache_key, data.to_json(), ex=300)
+
+    return data
+
+
 try:
 
     stock = yf.Ticker(symbol)
 
-    data = stock.history(period=period)
-
+    data = get_stock_data(symbol, period)
+    save_search(symbol, period)
+    
     if data.empty:
         st.warning("⚠ No stock data available for this symbol or time range.")
         st.stop()
@@ -67,18 +100,20 @@ try:
     st.markdown("---")
 
     col4, col5 = st.columns(2)
+
     col4.write(f"**Market Cap:** {market_cap}")
     col5.write(f"**Volume:** {volume}")
 
     st.markdown("---")
+
 
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
         x=data.index,
         y=data["Close"],
-        mode='lines',
-        name='Closing Price'
+        mode="lines",
+        name="Closing Price"
     ))
 
     fig.update_layout(
@@ -103,11 +138,12 @@ try:
 
     st.plotly_chart(fig, use_container_width=True)
 
-except yf.shared._exceptions.YFinanceError:
-    st.error("Failed to fetch stock data from Yahoo Finance API.")
 
 except ConnectionError:
-    st.error("Network error. Please check your internet connection.")
+    st.error("🌐 Network error. Please check your internet connection.")
+
+except ValueError:
+    st.error("⚠ Invalid data received from the API.")
 
 except Exception as e:
-    st.error("Unexpected error occurred while fetching stock data.")
+    st.error(f"⚠ Unexpected error occurred: {e}")
