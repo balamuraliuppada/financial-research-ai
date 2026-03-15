@@ -10,6 +10,7 @@ from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=300000)
 
 create_table()
+
 try:
     redis_client = redis.Redis(host="localhost", port=6379, db=0)
     redis_client.ping()
@@ -40,6 +41,7 @@ period = st.selectbox(
     ["1mo", "3mo", "6mo", "1y", "5y"]
 )
 
+
 @st.cache_data(ttl=300)
 def get_stock_data(symbol, period):
 
@@ -53,7 +55,9 @@ def get_stock_data(symbol, period):
             return pd.read_json(cached_data)
 
     stock = yf.Ticker(symbol)
+
     log_api_call(symbol, period)
+
     data = stock.history(period=period)
 
     if redis_client is not None:
@@ -67,6 +71,7 @@ try:
     stock = yf.Ticker(symbol)
 
     data = get_stock_data(symbol, period)
+
     save_search(symbol, period)
 
     if data.empty:
@@ -78,6 +83,22 @@ try:
     company_name = info.get("longName", selected_stock_name)
     market_cap = info.get("marketCap", "N/A")
     volume = info.get("volume", "N/A")
+
+    # ------------------------
+    # Technical Indicators
+    # ------------------------
+
+    data["MA20"] = data["Close"].rolling(window=20).mean()
+
+    delta = data["Close"].diff()
+
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+
+    rs = gain / loss
+    data["RSI"] = 100 - (100 / (1 + rs))
+
+    # ------------------------
 
     current_price = round(data["Close"].iloc[-1], 2)
     previous_close = round(data["Close"].iloc[-2], 2)
@@ -110,7 +131,7 @@ try:
 
     st.markdown("---")
 
-
+    fig = go.Figure()
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -118,6 +139,13 @@ try:
         y=data["Close"],
         mode="lines",
         name="Closing Price"
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data["MA20"],
+        mode="lines",
+        name="20 Day Moving Average"
     ))
 
     fig.update_layout(
@@ -141,7 +169,6 @@ try:
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
 
 except ConnectionError:
     st.error("🌐 Network error. Please check your internet connection.")
