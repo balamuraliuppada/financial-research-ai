@@ -1,48 +1,46 @@
 import psycopg2
 
-def connect_db():
-    try:
-        return psycopg2.connect(
-            host="localhost",
-            database="financial_ai",
-            user="postgres",
-            password="postgres"
-        )
-    except:
-        return None
+DB_NAME = "financial_ai"
+DB_USER = "postgres"
+DB_PASSWORD = "#PostSQL"
+DB_HOST = "localhost"
+DB_PORT = "5432"
+
+
+def get_connection():
+    return psycopg2.connect(
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=DB_PORT
+    )
+
 
 def create_table():
-    conn = connect_db()
-
-    if conn is None:
-        return
-
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS stock_search_history (
+        CREATE TABLE IF NOT EXISTS stock_searches (
             id SERIAL PRIMARY KEY,
-            stock_symbol TEXT,
-            time_range TEXT,
-            search_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+            symbol VARCHAR(20),
+            period VARCHAR(10),
+            searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
 
     conn.commit()
     cur.close()
     conn.close()
 
+
 def save_search(symbol, period):
-
-    conn = connect_db()
-
-    if conn is None:
-        return
-
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute(
-        "INSERT INTO stock_search_history (stock_symbol, time_range) VALUES (%s,%s)",
+        "INSERT INTO stock_searches (symbol, period) VALUES (%s, %s)",
         (symbol, period)
     )
 
