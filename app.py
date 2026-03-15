@@ -45,7 +45,7 @@ symbol = stock_options[selected_stock_name]
 
 period = st.selectbox(
     "Select Time Range",
-    ["1mo", "3mo", "6mo", "1y", "5y"]
+    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "5y"]
 )
 
 # -----------------------------
@@ -67,13 +67,15 @@ def get_stock_data(symbol, period):
 
     log_api_call(symbol, period)
 
-    data = stock.history(period=period)
+    if period == "1d":
+        data = stock.history(period="1d", interval="5m")
+    else:
+        data = stock.history(period=period)
 
     if redis_client is not None:
         redis_client.set(cache_key, data.to_json(), ex=300)
 
     return data
-
 
 # -----------------------------
 # News Sentiment Function
