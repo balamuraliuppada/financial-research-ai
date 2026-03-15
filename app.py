@@ -6,11 +6,15 @@ import pandas as pd
 from database import create_table, save_search
 from logger import log_api_call, log_api_error
 from streamlit_autorefresh import st_autorefresh
+from textblob import TextBlob
+import requests
 
+# Auto refresh every 5 minutes
 st_autorefresh(interval=300000)
 
 create_table()
 
+# Redis setup
 try:
     redis_client = redis.Redis(host="localhost", port=6379, db=0)
     redis_client.ping()
@@ -21,6 +25,9 @@ st.set_page_config(page_title="Financial Research AI", layout="wide")
 
 st.title("Financial Research AI - Stock Dashboard")
 
+# -----------------------------
+# Stock Options
+# -----------------------------
 stock_options = {
     "Reliance Industries": "RELIANCE.NS",
     "Tata Consultancy Services (TCS)": "TCS.NS",
@@ -41,7 +48,9 @@ period = st.selectbox(
     ["1mo", "3mo", "6mo", "1y", "5y"]
 )
 
-
+# -----------------------------
+# Get Stock Data (with caching)
+# -----------------------------
 @st.cache_data(ttl=300)
 def get_stock_data(symbol, period):
 
@@ -66,6 +75,47 @@ def get_stock_data(symbol, period):
     return data
 
 
+# -----------------------------
+# News Sentiment Function
+# -----------------------------
+def get_news_sentiment(query):
+    query = company_name  
+    url = f"https://newsapi.org/v2/everything?q={query}&pageSize=5&apiKey=7b74b92a008c43d7a0e8fc6f8712d2f2"
+
+    try:
+        response = requests.get(url)
+
+        data = response.json()
+
+        if data["status"] != "ok":
+            return None, []
+
+        articles = data["articles"]
+
+        if len(articles) == 0:
+            return None, []
+
+        sentiments = []
+        titles = []
+
+        for article in articles:
+            title = article["title"]
+            titles.append(title)
+
+            sentiment = TextBlob(title).sentiment.polarity
+            sentiments.append(sentiment)
+
+        avg_sentiment = sum(sentiments) / len(sentiments)
+
+        return avg_sentiment, titles
+
+    except:
+        return None, []
+
+
+# -----------------------------
+# Main Logic
+# -----------------------------
 try:
 
     stock = yf.Ticker(symbol)
@@ -84,9 +134,9 @@ try:
     market_cap = info.get("marketCap", "N/A")
     volume = info.get("volume", "N/A")
 
-    # ------------------------
+    # -----------------------------
     # Technical Indicators
-    # ------------------------
+    # -----------------------------
 
     data["MA20"] = data["Close"].rolling(window=20).mean()
 
@@ -98,7 +148,9 @@ try:
     rs = gain / loss
     data["RSI"] = 100 - (100 / (1 + rs))
 
-    # ------------------------
+    # -----------------------------
+    # Metrics
+    # -----------------------------
 
     current_price = round(data["Close"].iloc[-1], 2)
     previous_close = round(data["Close"].iloc[-2], 2)
@@ -131,7 +183,13 @@ try:
 
     st.markdown("---")
 
-    fig = go.Figure()
+    # RSI Display
+    st.metric("RSI Indicator", round(data["RSI"].iloc[-1], 2))
+
+    # -----------------------------
+    # Chart
+    # -----------------------------
+
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -169,6 +227,34 @@ try:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+    # -----------------------------
+    # News Sentiment
+    # -----------------------------
+
+    st.markdown("---")
+
+    st.subheader("News Sentiment Analysis")
+
+    sentiment, news_titles = get_news_sentiment(selected_stock_name)
+
+    if sentiment is not None:
+
+        if sentiment > 0.1:
+            st.success("Overall Sentiment: Positive 📈")
+        elif sentiment < -0.1:
+            st.error("Overall Sentiment: Negative 📉")
+        else:
+            st.info("Overall Sentiment: Neutral")
+
+        st.write("Recent News:")
+
+        for title in news_titles:
+            st.write("•", title)
+
+    else:
+        st.warning("News data not available.")
+
 
 except ConnectionError:
     st.error("🌐 Network error. Please check your internet connection.")
