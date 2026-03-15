@@ -78,22 +78,18 @@ def get_stock_data(symbol, period):
 # -----------------------------
 # News Sentiment Function
 # -----------------------------
-def get_news_sentiment(query):
-    query = company_name  
-    url = f"https://newsapi.org/v2/everything?q={query}&pageSize=5&apiKey=7b74b92a008c43d7a0e8fc6f8712d2f2"
+def get_news_sentiment(company_name):
+
+    url = f"https://newsapi.org/v2/everything?q={company_name}&pageSize=5&apiKey=7b74b92a008c43d7a0e8fc6f8712d2f2"
 
     try:
         response = requests.get(url)
+        news_data = response.json()
 
-        data = response.json()
-
-        if data["status"] != "ok":
+        if news_data["status"] != "ok":
             return None, []
 
-        articles = data["articles"]
-
-        if len(articles) == 0:
-            return None, []
+        articles = news_data["articles"]
 
         sentiments = []
         titles = []
@@ -125,7 +121,7 @@ try:
     save_search(symbol, period)
 
     if data.empty:
-        st.warning("⚠ No stock data available for this symbol or time range.")
+        st.warning("⚠ No stock data available.")
         st.stop()
 
     info = stock.info
@@ -165,11 +161,8 @@ try:
 
     col1, col2, col3 = st.columns(3)
 
-    col1.metric(
-        "Current Price (₹)",
-        current_price,
-        f"{price_change} ({percent_change}%)"
-    )
+    col1.metric("Current Price (₹)", current_price,
+                f"{price_change} ({percent_change}%)")
 
     col2.metric(f"{period} High", period_high)
     col3.metric(f"{period} Low", period_low)
@@ -183,11 +176,10 @@ try:
 
     st.markdown("---")
 
-    # RSI Display
     st.metric("RSI Indicator", round(data["RSI"].iloc[-1], 2))
 
     # -----------------------------
-    # Chart
+    # Main Chart
     # -----------------------------
 
     fig = go.Figure()
@@ -196,7 +188,7 @@ try:
         x=data.index,
         y=data["Close"],
         mode="lines",
-        name="Closing Price"
+        name=f"{selected_stock_name} Price"
     ))
 
     fig.add_trace(go.Scatter(
@@ -207,23 +199,10 @@ try:
     ))
 
     fig.update_layout(
-        title=f"{company_name} - Price Timeline",
+        title=f"{company_name} Price Timeline",
         xaxis_title="Date",
         yaxis_title="Price (INR)",
-        template="plotly_dark",
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1, label="1M", step="month", stepmode="backward"),
-                    dict(count=3, label="3M", step="month", stepmode="backward"),
-                    dict(count=6, label="6M", step="month", stepmode="backward"),
-                    dict(count=1, label="1Y", step="year", stepmode="backward"),
-                    dict(step="all")
-                ])
-            ),
-            rangeslider=dict(visible=True),
-            type="date"
-        )
+        template="plotly_dark"
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -233,7 +212,6 @@ try:
     # -----------------------------
 
     st.markdown("---")
-
     st.subheader("News Sentiment Analysis")
 
     sentiment, news_titles = get_news_sentiment(selected_stock_name)
@@ -247,20 +225,61 @@ try:
         else:
             st.info("Overall Sentiment: Neutral")
 
-        st.write("Recent News:")
-
         for title in news_titles:
             st.write("•", title)
 
     else:
         st.warning("News data not available.")
 
+    # -----------------------------
+    # Stock Comparison (Below News)
+    # -----------------------------
+
+    st.markdown("---")
+    st.subheader("Stock Comparison")
+
+    compare_stock = st.selectbox(
+        "Select another stock to compare",
+        list(stock_options.keys())
+    )
+
+    compare_symbol = stock_options[compare_stock]
+
+    compare_data = get_stock_data(compare_symbol, period)
+
+    st.write(f"Comparing **{selected_stock_name}** vs **{compare_stock}**")
+
+    compare_fig = go.Figure()
+
+    compare_fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data["Close"],
+        mode="lines",
+        name=selected_stock_name
+    ))
+
+    compare_fig.add_trace(go.Scatter(
+        x=compare_data.index,
+        y=compare_data["Close"],
+        mode="lines",
+        name=compare_stock
+    ))
+
+    compare_fig.update_layout(
+        title="Stock Price Comparison",
+        xaxis_title="Date",
+        yaxis_title="Price (INR)",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(compare_fig, use_container_width=True)
+
 
 except ConnectionError:
-    st.error("🌐 Network error. Please check your internet connection.")
+    st.error("🌐 Network error.")
 
 except ValueError:
-    st.error("⚠ Invalid data received from the API.")
+    st.error("⚠ Invalid data received.")
 
 except Exception as e:
     log_api_error(e)
