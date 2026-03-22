@@ -151,3 +151,20 @@
 2026-03-22 23:42:51,551 - INFO - API call made for ZOMATO.NS with period 1d
 2026-03-22 23:42:52,213 - ERROR - $ZOMATO.NS: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
 2026-03-22 23:47:03,375 - INFO - API call made for RELIANCE.NS with period 1d
+2026-03-22 23:52:16,518 - INFO - API call made for RELIANCE.NS with period 1d
+2026-03-22 23:52:18,061 - INFO - API call made for ZOMATO.NS with period 1d
+2026-03-22 23:52:18,482 - ERROR - $ZOMATO.NS: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
+2026-03-23 00:00:21,594 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-03-23 00:00:23,048 - INFO - API call made for ZOMATO.NS with period 1d
+2026-03-23 00:00:23,519 - ERROR - $ZOMATO.NS: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
+2026-03-23 00:00:46,499 - INFO - API call made for ZOMOTO with period 1d
+2026-03-23 00:00:47,588 - ERROR - $ZOMOTO: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
+2026-03-23 00:01:03,855 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-23 00:01:05,408 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-23 00:07:41,420 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-03-23 00:08:04,144 - INFO - API call made for ZOMOTO with period 1d
+2026-03-23 00:08:05,623 - ERROR - HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not found for symbol: ZOMOTO"}}}
+2026-03-23 00:08:06,183 - ERROR - $ZOMOTO: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
+2026-03-23 00:08:06,239 - INFO - API call made for ZOMATO.NS with period 1d
+2026-03-23 00:08:07,519 - ERROR - $ZOMATO.NS: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
+2026-03-23 00:12:32,572 - INFO - API call made for RELIANCE.NS with period 1d
