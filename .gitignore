@@ -2,3 +2,4 @@
 venv/
 .streamlit/
 .vscode/
+api_monitor.log
