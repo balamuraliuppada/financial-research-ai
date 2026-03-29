@@ -13,3 +13,4 @@ langgraph
 python-dotenv
 pytz
 requests
+matplotlib
