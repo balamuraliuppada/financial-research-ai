@@ -26,11 +26,21 @@ st_autorefresh(interval=300000)
 create_table()
 
 # ─── Redis (optional, graceful degradation) ───────────────────────────────────
+import os
+
 try:
-    import redis
-    redis_client = redis.Redis(host="localhost", port=6379, db=0)
+    redis_url = os.getenv("REDIS_URL")
+
+    if redis_url:
+        redis_client = redis.from_url(redis_url)
+    else:
+        redis_client = redis.Redis(host="localhost", port=6379, db=0)
+
     redis_client.ping()
-except Exception:
+    print("Redis connected")
+
+except Exception as e:
+    print("Redis not available:", e)
     redis_client = None
 
 # ─── Global CSS ───────────────────────────────────────────────────────────────
