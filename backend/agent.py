@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
-from tools import (
+from backend.tools import (
     get_stock_price,
     get_news_sentiment,
     get_rsi_and_ma,

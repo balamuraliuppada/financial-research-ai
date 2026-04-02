@@ -2,3 +2,5 @@
 venv/
 .streamlit/
 .vscode/
+frontend/node_modules/
+backend/.env/

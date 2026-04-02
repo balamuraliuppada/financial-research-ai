@@ -1,9 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
 streamlit
 yfinance
 plotly
 pandas
 redis
-psycopg2-binary
 streamlit-autorefresh
 textblob
 langchain
@@ -13,4 +16,3 @@ langgraph
 python-dotenv
 pytz
 requests
-matplotlib

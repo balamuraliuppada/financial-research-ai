@@ -168,3 +168,35 @@
 2026-03-23 00:08:06,239 - INFO - API call made for ZOMATO.NS with period 1d
 2026-03-23 00:08:07,519 - ERROR - $ZOMATO.NS: possibly delisted; no price data found  (period=1d) (Yahoo error = "No data found, symbol may be delisted")
 2026-03-23 00:12:32,572 - INFO - API call made for RELIANCE.NS with period 1d
+2026-03-29 23:27:46,538 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-29 23:30:10,517 - INFO - API call made for BAJAJ-AUTO.NS with period 1d
+2026-03-29 23:30:16,096 - INFO - API call made for DIVISLAB.NS with period 1d
+2026-03-29 23:30:21,105 - INFO - API call made for M&M.NS with period 1d
+2026-03-29 23:30:28,062 - INFO - API call made for AXISBANK.NS with period 1d
+2026-03-29 23:32:29,536 - ERROR - HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not found for symbol: TATAMOTORS.NS"}}}
+2026-03-29 23:32:43,682 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-29 23:32:48,203 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-29 23:32:49,291 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-29 23:37:29,450 - INFO - API call made for AXISBANK.NS with period 1d
+2026-03-29 23:42:30,390 - INFO - API call made for AXISBANK.NS with period 1d
+2026-03-29 23:47:32,467 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-29 23:52:30,583 - INFO - API call made for AXISBANK.NS with period 1d
+2026-03-29 23:57:32,033 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:02:31,359 - INFO - API call made for AXISBANK.NS with period 1d
+2026-03-30 00:02:33,089 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:04:12,883 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-30 00:04:14,428 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-30 00:07:58,667 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:13:00,063 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:22:58,629 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:28:00,032 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:33:00,817 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:42:58,466 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-03-30 00:48:01,065 - INFO - API call made for ADANIPORTS.NS with period 1d
+2026-04-03 00:07:50,507 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-04-03 00:08:50,143 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-03 00:08:53,021 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-03 00:10:03,522 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-04-03 00:10:05,096 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-04-03 00:10:05,103 - INFO - Retrying google.genai._api_client.BaseApiClient._request_once in 1.6588941029266902 seconds as it raised ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}.
+2026-04-03 00:10:08,677 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
