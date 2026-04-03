@@ -3,7 +3,7 @@ from textblob import TextBlob
 import requests
 import pandas as pd
 from langchain_core.tools import tool
-from fundamentals import get_fundamentals, get_sector_comparison, get_stocks_by_sector, is_market_open
+from backend.fundamentals import get_fundamentals, get_sector_comparison, get_stocks_by_sector, is_market_open
 
 @tool
 def get_stock_price(symbol: str, period: str = "1mo") -> str:
