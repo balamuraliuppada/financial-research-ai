@@ -2,7 +2,7 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = "financial_ai.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "financial_ai.db")
 
 
 def get_connection():

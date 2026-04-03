@@ -18,7 +18,12 @@ def get_agent_executor():
     if not os.environ.get("GOOGLE_API_KEY"):
         raise ValueError("GOOGLE_API_KEY environment variable is not set.")
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0,
+        retries=0,
+        request_timeout=35,
+    )
 
     tools = [
         get_stock_price,
@@ -70,4 +75,9 @@ def run_financial_agent(query: str) -> str:
     except ValueError as e:
         return f"Configuration Error: {e}"
     except Exception as e:
-        return f"Error running agent: {e}"
+        msg = str(e)
+        if "RESOURCE_EXHAUSTED" in msg or "429" in msg:
+            return "AI provider quota is exhausted right now (Gemini 429). Add billing/quota or try again later."
+        if "timed out" in msg.lower() or "deadline" in msg.lower():
+            return "AI request timed out. Please try a shorter query or retry in a moment."
+        return f"Error running agent: {msg}"

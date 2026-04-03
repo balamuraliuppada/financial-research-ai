@@ -33,4 +33,4 @@ export const updateProfile  = (data) => api.put('/profile', data);
 export const getProfileStats = () => api.get('/profile/stats').then(r => r.data);
 
 // ── Agent ─────────────────────────────────────────────────────────────────────
-export const sendChat = (message) => api.post('/agent/chat', { message }).then(r => r.data);
+export const sendChat = (message) => api.post('/agent/chat', { message }, { timeout: 120000 }).then(r => r.data);

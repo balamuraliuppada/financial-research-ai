@@ -52,8 +52,15 @@ export default function Assistant() {
     try {
       const { response } = await sendChat(msg);
       setMessages(m => [...m, { role: 'assistant', content: response }]);
-    } catch {
-      setMessages(m => [...m, { role: 'assistant', content: '⚠ Failed to get a response. Please check that the backend is running.' }]);
+    } catch (err) {
+      const detail =
+        err?.response?.data?.detail ||
+        (err?.code === 'ECONNABORTED'
+          ? 'Request timed out while waiting for AI response. Please try again.'
+          : null) ||
+        err?.message ||
+        'Failed to get a response. Please check backend/API key/quota.';
+      setMessages(m => [...m, { role: 'assistant', content: `⚠ ${detail}` }]);
     } finally {
       setLoading(false);
     }

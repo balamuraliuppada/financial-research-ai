@@ -1,18 +1,19 @@
+import redis
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objs as go
 import pandas as pd
-from database import (
+from backend.database import (
     create_table, save_search,
     add_to_portfolio, remove_from_portfolio, get_portfolio,
     add_to_watchlist, remove_from_watchlist, get_watchlist, update_watchlist_note,
 )
-from logger import log_api_call, log_api_error
+from backend.logger import log_api_call, log_api_error
 from streamlit_autorefresh import st_autorefresh
 from textblob import TextBlob
 import requests
-from agent import run_financial_agent
-from fundamentals import (
+from backend.agent import run_financial_agent
+from backend.fundamentals import (
     get_fundamentals, get_sector_comparison, get_sector,
     is_market_open, format_inr, ALL_SECTORS, INDIAN_STOCKS,
 )

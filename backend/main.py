@@ -66,6 +66,7 @@ app = FastAPI(title="Financial Research AI", version="2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -373,7 +374,11 @@ def profile_stats():
     portfolio = get_portfolio()
     watchlist = get_watchlist()
     conn = get_db()
-    searches = conn.execute("SELECT COUNT(*) as c FROM stock_searches").fetchone()
+    create_table()
+    try:
+        searches = conn.execute("SELECT COUNT(*) as c FROM stock_searches").fetchone()
+    except sqlite3.OperationalError:
+        searches = {"c": 0}
     conn.close()
     return {
         "portfolio_count": len(portfolio),
