@@ -1,9 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Star, RefreshCw, TrendingUp, TrendingDown, AlertTriangle, ExternalLink } from 'lucide-react';
-import { getStockList, getStockPrice, getNews, addPortfolio, addWatchlist } from '../api';
+import { getStockPrice, getNews, addPortfolio, addWatchlist } from '../api';
 import StockChart from '../components/StockChart';
 import CompareChart from '../components/CompareChart';
 import { useToast } from '../context/ToastContext';
+
+const MARKET_TAPE_SYMBOLS = [
+  'RELIANCE.NS',
+  'HDFCBANK.NS',
+  'INFY.NS',
+  'ICICIBANK.NS',
+  'SBIN.NS',
+  'ITC.NS',
+  'LT.NS',
+];
+
+function buildSparkline(candles = []) {
+  const values = candles
+    .map(c => Number(c.Close))
+    .filter(v => Number.isFinite(v));
+
+  if (values.length < 2) return '';
+
+  const width = 92;
+  const height = 28;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const points = values.map((value, index) => {
+    const x = (index / (values.length - 1)) * width;
+    const y = height - ((value - min) / range) * height;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return `M ${points.join(' L ')}`;
+}
 
 function MetricCard({ label, value, sub, subType }) {
   return (
@@ -42,6 +74,8 @@ export default function Dashboard({ stockList }) {
   const [loadNews, setLoadNews]     = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [compareWith, setCompareWith] = useState(null);
+  const [marketTape, setMarketTape] = useState([]);
+  const [tapeLoading, setTapeLoading] = useState(false);
 
   const filtered = stockList.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,6 +103,70 @@ export default function Dashboard({ stockList }) {
     } catch {}
     finally { setLoadNews(false); }
   }, []);
+
+  useEffect(() => {
+    if (!stockList.length || selected) return;
+    const defaultStock = stockList.find(s => s.symbol === 'RELIANCE.NS') || stockList[0];
+    if (defaultStock) selectStock(defaultStock);
+  }, [stockList, selected]);
+
+  useEffect(() => {
+    if (!stockList.length) return;
+
+    const loadTape = async () => {
+      setTapeLoading(true);
+      try {
+        const preferred = MARKET_TAPE_SYMBOLS
+          .map(sym => stockList.find(s => s.symbol === sym))
+          .filter(Boolean);
+        const fallback = stockList.filter(
+          s => !MARKET_TAPE_SYMBOLS.includes(s.symbol)
+        );
+
+        const picks = [];
+        const seen = new Set();
+
+        [...preferred, ...fallback].forEach((stock) => {
+          if (!stock || seen.has(stock.symbol) || picks.length >= 8) return;
+          seen.add(stock.symbol);
+          picks.push(stock);
+        });
+
+        const data = await Promise.all(
+          picks.map(async (stock) => {
+            try {
+              const quote = await getStockPrice(stock.symbol, '5d');
+              return {
+                ...stock,
+                current_price: quote.current_price,
+                change: quote.change,
+                change_pct: quote.change_pct,
+                sparkline: buildSparkline(quote.candles),
+              };
+            } catch {
+              return {
+                ...stock,
+                current_price: null,
+                change: null,
+                change_pct: null,
+                sparkline: '',
+              };
+            }
+          })
+        );
+        setMarketTape(data);
+      } finally {
+        setTapeLoading(false);
+      }
+    };
+
+    loadTape();
+  }, [stockList]);
+
+  const topMovers = [...marketTape]
+    .filter(s => typeof s.change_pct === 'number')
+    .sort((a, b) => Math.abs(b.change_pct) - Math.abs(a.change_pct))
+    .slice(0, 4);
 
   const selectStock = (stock) => {
     setSelected(stock);
@@ -106,6 +204,35 @@ export default function Dashboard({ stockList }) {
 
   return (
     <div>
+      {/* Market tape */}
+      <div className="market-tape-wrap mb-20 fade-up">
+        <div className="market-tape-header">
+          <div className="market-tape-status">{tapeLoading ? 'Refreshing quotes...' : 'Live tape'}</div>
+        </div>
+        <div className="market-tape-scroller">
+          {marketTape.map((s) => (
+            <button
+              key={s.symbol}
+              className={`tape-pill ${selected?.symbol === s.symbol ? 'active' : ''}`}
+              onClick={() => selectStock(s)}
+            >
+              <div className="tape-pill-top">
+                <span className="sym">{s.symbol.replace('.NS', '')}</span>
+                <span className={typeof s.change_pct === 'number' ? (s.change_pct >= 0 ? 'chg up' : 'chg dn') : 'chg'}>
+                  {typeof s.change_pct === 'number' ? `${s.change_pct >= 0 ? '+' : ''}${s.change_pct}%` : '--'}
+                </span>
+              </div>
+              <div className="tape-pill-bottom">
+                <span className="pr">{typeof s.current_price === 'number' ? `₹${s.current_price.toLocaleString('en-IN')}` : '—'}</span>
+                <svg className="tape-spark" viewBox="0 0 92 28" preserveAspectRatio="none" aria-hidden="true">
+                  <path d={s.sparkline || 'M 0 14 L 92 14'} />
+                </svg>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Search + Stock selector */}
       <div className="card mb-20 fade-up">
         <div className="flex items-center gap-12 flex-wrap">
@@ -118,16 +245,6 @@ export default function Dashboard({ stockList }) {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          {selected && (
-            <div className="flex gap-8">
-              <button className="btn btn-ghost btn-sm" onClick={handleAddPortfolio}><Plus size={14}/> Portfolio</button>
-              <button className="btn btn-ghost btn-sm" onClick={handleAddWatchlist}><Star size={14}/> Watchlist</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => load(selected.symbol, period)}><RefreshCw size={14}/></button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowCompare(v => !v)}>
-                {showCompare ? 'Hide Compare' : 'Compare'}
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Dropdown results */}
@@ -157,6 +274,25 @@ export default function Dashboard({ stockList }) {
         )}
       </div>
 
+      {!!topMovers.length && (
+        <div className="movers-grid mb-20 fade-up">
+          {topMovers.map((m) => (
+            <button key={m.symbol} className="mover-card" onClick={() => selectStock(m)}>
+              <div className="flex justify-between items-center">
+                <span className="name">{m.name}</span>
+                <span className={`delta ${m.change_pct >= 0 ? 'up' : 'dn'}`}>
+                  {m.change_pct >= 0 ? <TrendingUp size={12}/> : <TrendingDown size={12}/>} {m.change_pct >= 0 ? '+' : ''}{m.change_pct}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-8">
+                <span className="sym">{m.symbol}</span>
+                <span className="pr">₹{m.current_price?.toLocaleString('en-IN')}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
       {!selected && (
         <div className="empty-state fade-up">
           <TrendingUp size={56} style={{ margin: '0 auto 16px', display: 'block' }}/>
@@ -170,9 +306,19 @@ export default function Dashboard({ stockList }) {
           {/* Header */}
           <div className="flex justify-between items-center mb-20 fade-up">
             <div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--text-1)' }}>
-                {stockData?.name || selected.name}
-              </h2>
+              <div className="flex items-center gap-10 flex-wrap">
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--text-1)' }}>
+                  {stockData?.name || selected.name}
+                </h2>
+                <div className="flex gap-8 flex-wrap">
+                  <button className="btn btn-ghost btn-sm" onClick={handleAddPortfolio}><Plus size={14}/> Portfolio</button>
+                  <button className="btn btn-ghost btn-sm" onClick={handleAddWatchlist}><Star size={14}/> Watchlist</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => load(selected.symbol, period)}><RefreshCw size={14}/> Refresh</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowCompare(v => !v)}>
+                    {showCompare ? 'Hide Compare' : 'Compare'}
+                  </button>
+                </div>
+              </div>
               <div className="flex gap-8 mt-4 items-center flex-wrap">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)' }}>{selected.symbol}</span>
                 <span className="tag tag-sector">{selected.sector}</span>

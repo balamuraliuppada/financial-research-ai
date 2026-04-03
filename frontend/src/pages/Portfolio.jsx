@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Briefcase } from 'lucide-react';
-import { getPortfolio, addPortfolio, removePortfolio, getStockList } from '../api';
+import { getPortfolio, addPortfolio, removePortfolio } from '../api';
 import { useToast } from '../context/ToastContext';
 
 export default function Portfolio({ stockList }) {
   const toast = useToast();
+  const validSymbols = new Set(stockList.map(s => s.symbol));
   const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(false);
   const [symbol, setSymbol]   = useState('');
@@ -23,13 +24,20 @@ export default function Portfolio({ stockList }) {
   const handleAdd = async () => {
     const sym = symbol.trim().toUpperCase();
     if (!sym) return;
+    if (!validSymbols.has(sym)) {
+      toast('Please select a valid stock symbol from the list', 'error');
+      return;
+    }
     setAdding(true);
     try {
       await addPortfolio(sym);
       setSymbol('');
       toast(`${sym} added to portfolio`);
       load();
-    } catch { toast('Failed to add stock', 'error'); }
+    } catch (err) {
+      const detail = err?.response?.data?.detail || 'Failed to add stock';
+      toast(detail, 'error');
+    }
     finally { setAdding(false); }
   };
 

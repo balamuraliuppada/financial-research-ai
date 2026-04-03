@@ -98,6 +98,13 @@ def stocks_list():
 def sectors():
     return {"sectors": ALL_SECTORS}
 
+
+def validate_stock_symbol(symbol: str):
+    sym = symbol.upper().strip()
+    if sym not in INDIAN_STOCKS:
+        raise HTTPException(status_code=400, detail=f"Unknown stock symbol: {sym}")
+    return sym
+
 @app.get("/api/stocks/{symbol}/price")
 def stock_price(symbol: str, period: str = "1mo"):
     try:
@@ -266,7 +273,8 @@ def portfolio_get():
 
 @app.post("/api/portfolio")
 def portfolio_add(item: PortfolioItem):
-    add_to_portfolio(item.symbol.upper())
+    sym = validate_stock_symbol(item.symbol)
+    add_to_portfolio(sym)
     return {"ok": True}
 
 @app.delete("/api/portfolio/{symbol}")
@@ -312,7 +320,7 @@ def watchlist_get():
 
 @app.post("/api/watchlist")
 def watchlist_add(item: WatchlistItem):
-    sym = item.symbol.upper()
+    sym = validate_stock_symbol(item.symbol)
     name = item.name or INDIAN_STOCKS.get(sym, (sym,""))[0]
     sector = item.sector or get_sector(sym)
     add_to_watchlist(sym, name=name, sector=sector, note=item.note or "")

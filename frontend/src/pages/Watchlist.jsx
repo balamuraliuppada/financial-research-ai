@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Star, Trash2, Plus, RefreshCw, TrendingUp, TrendingDown, Edit2, Check, X } from 'lucide-react';
-import { getWatchlist, addWatchlist, removeWatchlist, updateNote, getStockList } from '../api';
+import { getWatchlist, addWatchlist, removeWatchlist, updateNote } from '../api';
 import { useToast } from '../context/ToastContext';
-
-const SECTORS = [
-  'Information Technology','Banking & Finance','Energy & Conglomerates','Automobile',
-  'Pharmaceuticals','FMCG','Metals & Mining','Infrastructure','Telecom','Energy & Oil','Energy & Power',''
-];
 
 function NoteCell({ symbol, note, onSave }) {
   const [editing, setEditing] = useState(false);
@@ -42,6 +37,7 @@ function NoteCell({ symbol, note, onSave }) {
 
 export default function Watchlist({ stockList }) {
   const toast = useToast();
+  const validSymbols = new Set(stockList.map(s => s.symbol));
   const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter]   = useState('');
@@ -60,25 +56,35 @@ export default function Watchlist({ stockList }) {
     finally { setLoading(false); }
   }, [toast]);
 
+  const syncSymbolDetails = (s) => {
+    setSym(s);
+    const found = stockList.find(x => x.symbol === s);
+    setName(found?.name || '');
+    setSector(found?.sector || '');
+  };
+
   useEffect(() => { load(); }, [load]);
 
   // Auto-fill name when symbol selected from dropdown
-  const handleSymSelect = (s) => {
-    setSym(s);
-    const found = stockList.find(x => x.symbol === s);
-    if (found) { setName(found.name); setSector(found.sector); }
-  };
+  const handleSymSelect = (s) => syncSymbolDetails(s);
 
   const handleAdd = async () => {
     const s = sym.trim().toUpperCase();
     if (!s) return;
+    if (!validSymbols.has(s)) {
+      toast('Please select a valid stock symbol from the list', 'error');
+      return;
+    }
     setAdding(true);
     try {
       await addWatchlist({ symbol: s, name, sector, note });
       setSym(''); setName(''); setSector(''); setNote(''); setFormOpen(false);
       toast(`${s} added to watchlist`);
       load();
-    } catch { toast('Failed to add to watchlist', 'error'); }
+    } catch (err) {
+      const detail = err?.response?.data?.detail || 'Failed to add to watchlist';
+      toast(detail, 'error');
+    }
     finally { setAdding(false); }
   };
 
@@ -140,18 +146,15 @@ export default function Watchlist({ stockList }) {
                 {stockList.map(s => <option key={s.symbol} value={s.symbol}>{s.name}</option>)}
               </select>
               <input className="input" style={{ marginTop:6 }} placeholder="Or type e.g. ZOMATO.NS"
-                value={sym} onChange={e => setSym(e.target.value.toUpperCase())}/>
+                value={sym} onChange={e => syncSymbolDetails(e.target.value.toUpperCase())}/>
             </div>
             <div className="input-group">
               <label className="input-label">Company Name</label>
-              <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Auto-filled or custom"/>
+              <input className="input" value={name} readOnly disabled placeholder="Auto-filled from symbol"/>
             </div>
             <div className="input-group">
               <label className="input-label">Sector</label>
-              <select className="input" value={sector} onChange={e => setSector(e.target.value)}>
-                <option value="">Select sector…</option>
-                {SECTORS.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <input className="input" value={sector} readOnly disabled placeholder="Auto-filled from symbol"/>
             </div>
           </div>
           <div className="input-group mb-16">
