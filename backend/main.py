@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing import Optional
 import yfinance as yf
 import pandas as pd
+import math
 import json
 import asyncio
 import sys
@@ -63,10 +64,15 @@ def init_profile_table():
 
 app = FastAPI(title="Financial Research AI", version="2.0")
 
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "").rstrip("/")
+ALLOW_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+if FRONTEND_ORIGIN:
+    ALLOW_ORIGINS.append(FRONTEND_ORIGIN)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origins=ALLOW_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$|https://.*\.onrender\.com$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,6 +82,33 @@ app.add_middleware(
 def startup():
     create_table()
     init_profile_table()
+
+
+def json_safe(value):
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return None
+    return value
+
+
+def safe_round(value, digits=2):
+    cleaned = json_safe(value)
+    if cleaned is None:
+        return None
+    return round(float(cleaned), digits)
+
+
+def sanitize_records(df):
+    return [
+        {k: json_safe(v) for k, v in row.items()}
+        for row in df.to_dict(orient="records")
+    ]
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MARKET STATUS
@@ -137,15 +170,15 @@ def stock_price(symbol: str, period: str = "1mo"):
         data["Date"] = data["Datetime"].astype(str) if "Datetime" in data.columns else data["Date"].astype(str)
 
         cols = ["Date","Open","High","Low","Close","Volume","MA20","MA50","RSI","BB_upper","BB_lower","BB_mid"]
-        result = data[[c for c in cols if c in data.columns]].fillna("null").replace("null", None)
+        result = sanitize_records(data[[c for c in cols if c in data.columns]])
 
         info = ticker.info
         save_search(symbol, period)
 
-        current = round(float(data["Close"].iloc[-1]), 2)
-        prev    = round(float(data["Close"].iloc[-2]), 2) if len(data) > 1 else current
-        change  = round(current - prev, 2)
-        pct     = round((change / prev) * 100, 2) if prev else 0
+        current = safe_round(data["Close"].iloc[-1], 2)
+        prev = safe_round(data["Close"].iloc[-2], 2) if len(data) > 1 else current
+        change = safe_round(current - prev, 2) if current is not None and prev is not None else None
+        pct = safe_round((change / prev) * 100, 2) if change is not None and prev else None
 
         return {
             "symbol": symbol,
@@ -154,13 +187,13 @@ def stock_price(symbol: str, period: str = "1mo"):
             "current_price": current,
             "change": change,
             "change_pct": pct,
-            "period_high": round(float(data["High"].max()), 2),
-            "period_low": round(float(data["Low"].min()), 2),
-            "volume": info.get("volume", 0),
+            "period_high": safe_round(data["High"].max(), 2),
+            "period_low": safe_round(data["Low"].min(), 2),
+            "volume": json_safe(info.get("volume", 0)),
             "market_cap": format_inr(info.get("marketCap")),
-            "rsi": round(float(data["RSI"].iloc[-1]), 2) if data["RSI"].iloc[-1] is not None else None,
-            "ma20": round(float(data["MA20"].iloc[-1]), 2) if data["MA20"].iloc[-1] is not None else None,
-            "candles": result.to_dict(orient="records"),
+            "rsi": safe_round(data["RSI"].iloc[-1], 2),
+            "ma20": safe_round(data["MA20"].iloc[-1], 2),
+            "candles": result,
         }
     except HTTPException:
         raise
