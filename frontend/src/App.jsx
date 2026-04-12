@@ -8,6 +8,11 @@ import Watchlist from './pages/Watchlist';
 import Fundamentals from './pages/Fundamentals';
 import Assistant from './pages/Assistant';
 import ProfilePage from './pages/Profile';
+import Optimizer from './pages/Optimizer';
+import Alerts from './pages/Alerts';
+import MultiAsset from './pages/MultiAsset';
+import Options from './pages/Options';
+import Signals from './pages/Signals';
 import { ToastProvider } from './context/ToastContext';
 import { getStockList, getProfile } from './api';
 
@@ -42,6 +47,11 @@ function App() {
       case 'fundamentals': return <Fundamentals key={`fund-${refreshKey}`} stockList={stockList}/>;
       case 'assistant':    return <Assistant    key={`ai-${refreshKey}`}/>;
       case 'profile':      return <ProfilePage  key={`prof-${refreshKey}`}/>;
+      case 'optimizer':    return <Optimizer    key={`opt-${refreshKey}`}  stockList={stockList}/>;
+      case 'alerts':       return <Alerts       key={`alt-${refreshKey}`}  stockList={stockList}/>;
+      case 'multiasset':   return <MultiAsset   key={`ma-${refreshKey}`}/>;
+      case 'options':      return <Options      key={`opt2-${refreshKey}`}/>;
+      case 'signals':      return <Signals      key={`sig-${refreshKey}`}  stockList={stockList}/>;
       default:             return <Dashboard    stockList={stockList}/>;
     }
   };

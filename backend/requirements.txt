@@ -16,3 +16,8 @@ langgraph
 python-dotenv
 pytz
 requests
+sqlalchemy
+scipy
+numpy
+aiohttp
+tenacity

@@ -1,12 +1,13 @@
 """
-FastAPI Backend — Financial Research AI
-Connects React frontend to all existing Python modules.
+FastAPI Backend — Financial Research AI v3.0
+All endpoints: market, stocks, portfolio, watchlist, profile, agent,
+               alerts, optimization, multi-asset, options, signals.
 """
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict
 import yfinance as yf
 import pandas as pd
 import math
@@ -29,8 +30,33 @@ from fundamentals import (
 )
 from agent import run_financial_agent
 from logger import log_api_call, log_api_error
+from error_handling import health_monitor, FinAIError
+from models import init_db, SessionLocal, Alert, Notification, User, Portfolio as PortfolioModel
+from alerts import (
+    alert_engine, ws_manager,
+    create_alert, get_all_alerts, delete_alert, toggle_alert,
+    get_notifications, mark_notification_read, get_unread_count,
+)
+from portfolio_optimizer import run_optimization
+from multi_asset import (
+    get_treasury_yields, get_yield_curve, get_yield_history,
+    get_all_commodities, get_commodity_history,
+    get_all_forex_rates, get_forex_history,
+    get_cross_asset_correlation, get_asset_class_performance,
+    get_market_overview,
+    COMMODITIES, FOREX_PAIRS,
+)
+from options_pricing import (
+    black_scholes, binomial_tree, implied_volatility,
+    compute_strategy_payoff, get_strategy_payoff, STRATEGY_TEMPLATES,
+)
+from algo_signals import generate_signals, get_signal_summary, batch_signals
+from api_clients import (
+    YFinanceClient, AlphaVantageClient, MacroDataClient, ExchangeRateClient,
+    get_price_with_fallback, get_forex_with_fallback,
+)
 
-# ── Profile DB (SQLite, same file) ────────────────────────────────────────────
+# ── Profile DB (SQLite — legacy, keep for compatibility) ──────────────────────
 import sqlite3
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "financial_ai.db")
@@ -62,7 +88,7 @@ def init_profile_table():
     conn.commit()
     conn.close()
 
-app = FastAPI(title="Financial Research AI", version="2.0")
+app = FastAPI(title="Financial Research AI", version="3.0")
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "").rstrip("/")
 ALLOW_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -79,9 +105,15 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-def startup():
+async def startup():
     create_table()
     init_profile_table()
+    init_db()
+    await alert_engine.start()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await alert_engine.stop()
 
 
 def json_safe(value):
@@ -111,11 +143,22 @@ def sanitize_records(df):
     ]
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# HEALTH CHECK
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/health")
+def health_check():
+    return health_monitor.get_health()
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # MARKET STATUS
 # ═══════════════════════════════════════════════════════════════════════════════
 @app.get("/api/market/status")
 def market_status():
     return is_market_open()
+
+@app.get("/api/market/overview")
+def market_overview():
+    return get_market_overview()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # STOCKS
@@ -317,9 +360,36 @@ def portfolio_remove(symbol: str):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# PORTFOLIO OPTIMIZATION
+# ═══════════════════════════════════════════════════════════════════════════════
+class OptimizeRequest(BaseModel):
+    symbols: List[str]
+    strategy: str = "max_sharpe"
+    period: str = "1y"
+    risk_free: float = 0.05
+    include_frontier: bool = True
+
+@app.post("/api/portfolio/optimize")
+def portfolio_optimize(req: OptimizeRequest):
+    try:
+        result = run_optimization(
+            symbols=req.symbols,
+            strategy=req.strategy,
+            period=req.period,
+            risk_free=req.risk_free,
+            include_frontier=req.include_frontier,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # WATCHLIST
 # ═══════════════════════════════════════════════════════════════════════════════
-class WatchlistItem(BaseModel):
+class WatchlistItemModel(BaseModel):
     symbol: str
     name: Optional[str] = ""
     sector: Optional[str] = ""
@@ -352,7 +422,7 @@ def watchlist_get():
     return result
 
 @app.post("/api/watchlist")
-def watchlist_add(item: WatchlistItem):
+def watchlist_add(item: WatchlistItemModel):
     sym = validate_stock_symbol(item.symbol)
     name = item.name or INDIAN_STOCKS.get(sym, (sym,""))[0]
     sector = item.sector or get_sector(sym)
@@ -426,6 +496,237 @@ def profile_stats():
         "watchlist_count": len(watchlist),
         "total_searches": searches["c"] if searches else 0,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ALERTS & NOTIFICATIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+class AlertCreate(BaseModel):
+    symbol: str
+    alert_type: str
+    threshold: Optional[float] = None
+    condition: Optional[str] = ""
+
+class AlertToggle(BaseModel):
+    pass
+
+@app.post("/api/alerts")
+def alerts_create(body: AlertCreate):
+    try:
+        result = create_alert(
+            symbol=body.symbol,
+            alert_type=body.alert_type,
+            threshold=body.threshold,
+            condition=body.condition,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/alerts")
+def alerts_list(status: Optional[str] = None):
+    return get_all_alerts(status=status)
+
+@app.delete("/api/alerts/{alert_id}")
+def alerts_delete(alert_id: int):
+    if delete_alert(alert_id):
+        return {"ok": True}
+    raise HTTPException(status_code=404, detail="Alert not found")
+
+@app.patch("/api/alerts/{alert_id}/toggle")
+def alerts_toggle(alert_id: int):
+    result = toggle_alert(alert_id)
+    if result:
+        return result
+    raise HTTPException(status_code=404, detail="Alert not found")
+
+@app.get("/api/notifications")
+def notifications_list(unread_only: bool = False):
+    return get_notifications(unread_only=unread_only)
+
+@app.get("/api/notifications/unread-count")
+def notifications_unread():
+    return {"count": get_unread_count()}
+
+@app.patch("/api/notifications/{notif_id}/read")
+def notification_mark_read(notif_id: int):
+    if mark_notification_read(notif_id):
+        return {"ok": True}
+    raise HTTPException(status_code=404, detail="Notification not found")
+
+# WebSocket for real-time alerts
+@app.websocket("/ws/alerts")
+async def websocket_alerts(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive, receive pings
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MULTI-ASSET: FIXED INCOME
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/assets/fixed-income/yields")
+def fixed_income_yields():
+    return get_treasury_yields()
+
+@app.get("/api/assets/fixed-income/yield-curve")
+def fixed_income_yield_curve():
+    return get_yield_curve()
+
+@app.get("/api/assets/fixed-income/history/{maturity}")
+def fixed_income_history(maturity: str, period: str = "1y"):
+    return get_yield_history(maturity, period)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MULTI-ASSET: COMMODITIES
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/assets/commodities")
+def commodities_list():
+    return get_all_commodities()
+
+@app.get("/api/assets/commodities/{commodity}/history")
+def commodities_history(commodity: str, period: str = "3mo"):
+    return get_commodity_history(commodity, period)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MULTI-ASSET: FOREX
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/assets/forex")
+def forex_list():
+    return get_all_forex_rates()
+
+@app.get("/api/assets/forex/{pair}/history")
+def forex_history(pair: str, period: str = "3mo"):
+    return get_forex_history(pair, period)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MULTI-ASSET: CROSS-ASSET ANALYSIS
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/assets/correlation")
+def assets_correlation(period: str = "1y"):
+    return get_cross_asset_correlation(period)
+
+@app.get("/api/assets/performance")
+def assets_performance(period: str = "1y"):
+    return get_asset_class_performance(period)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MACRO INDICATORS
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/macro/indicators")
+def macro_indicators():
+    return MacroDataClient.get_macro_indicators()
+
+@app.get("/api/macro/indices")
+def macro_indices():
+    return MacroDataClient.get_market_indices()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OPTIONS PRICING
+# ═══════════════════════════════════════════════════════════════════════════════
+class OptionPriceRequest(BaseModel):
+    spot: float
+    strike: float
+    expiry_years: float
+    rate: float = 0.05
+    volatility: float = 0.25
+    option_type: str = "call"
+    model: str = "black_scholes"
+    steps: int = 100
+
+class StrategyRequest(BaseModel):
+    legs: List[Dict]
+    spot_min: Optional[float] = None
+    spot_max: Optional[float] = None
+
+class StrategyTemplateRequest(BaseModel):
+    strategy: str
+    spot: float
+    strike: float
+    premium: float
+
+@app.post("/api/options/price")
+def options_price(req: OptionPriceRequest):
+    try:
+        if req.model == "binomial":
+            return binomial_tree(req.spot, req.strike, req.expiry_years, req.rate,
+                                req.volatility, req.option_type, req.steps)
+        else:
+            return black_scholes(req.spot, req.strike, req.expiry_years, req.rate,
+                                 req.volatility, req.option_type)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/options/{symbol}/chain")
+def options_chain(symbol: str, expiry: Optional[str] = None):
+    try:
+        return YFinanceClient.get_options_chain(symbol, expiry)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/options/strategy")
+def options_strategy(req: StrategyRequest):
+    try:
+        spot_range = (req.spot_min, req.spot_max) if req.spot_min and req.spot_max else None
+        return compute_strategy_payoff(req.legs, spot_range)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/options/strategy/template")
+def options_strategy_template(req: StrategyTemplateRequest):
+    try:
+        return get_strategy_payoff(req.strategy, req.spot, req.strike, req.premium)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/options/strategies")
+def options_strategies_list():
+    return {"strategies": list(STRATEGY_TEMPLATES.keys())}
+
+@app.post("/api/options/implied-volatility")
+def options_iv(market_price: float, spot: float, strike: float,
+               expiry_years: float, rate: float = 0.05, option_type: str = "call"):
+    try:
+        iv = implied_volatility(market_price, spot, strike, expiry_years, rate, option_type)
+        return {"implied_volatility": iv, "iv_pct": round(iv * 100, 2)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TRADING SIGNALS
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.get("/api/signals/{symbol}")
+def signals_full(symbol: str, period: str = "6mo"):
+    result = generate_signals(symbol, period)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@app.get("/api/signals/{symbol}/summary")
+def signals_summary(symbol: str):
+    result = get_signal_summary(symbol)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+class BatchSignalRequest(BaseModel):
+    symbols: List[str]
+
+@app.post("/api/signals/batch")
+def signals_batch(req: BatchSignalRequest):
+    return batch_signals(req.symbols)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

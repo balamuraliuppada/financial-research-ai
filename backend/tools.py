@@ -124,3 +124,151 @@ def get_market_status() -> str:
         f"Day          : {status['day']}\n"
         f"NSE Hours    : {status['open_time']} – {status['close_time']}"
     )
+
+
+# ─── NEW TOOLS ────────────────────────────────────────────────────────────────
+
+@tool
+def get_trading_signals(symbol: str) -> str:
+    """
+    Get comprehensive algorithmic trading signals for a stock.
+    Analyses RSI, MACD, Stochastic, EMA, ADX, Bollinger, OBV, Supertrend, VWAP.
+    Returns a composite BUY/SELL/HOLD signal with confidence percentage.
+    Symbol should be in Yahoo Finance format e.g. 'RELIANCE.NS', 'TCS.NS'.
+    """
+    try:
+        from backend.algo_signals import generate_signals
+        result = generate_signals(symbol)
+        if "error" in result:
+            return f"Could not generate signals: {result['error']}"
+
+        lines = [f"**Trading Signals for {symbol}**", f"Price: ₹{result['current_price']}"]
+        lines.append(f"\n🎯 **Composite: {result['composite']['signal']} ({result['composite']['confidence']}% confidence)**")
+        lines.append(f"Score: {result['composite']['score']}")
+        lines.append(f"\nIndividual Signals:")
+        for sig in result["signals"]:
+            emoji = "🟢" if sig["signal"] == "BUY" else ("🔴" if sig["signal"] == "SELL" else "🟡")
+            lines.append(f"  {emoji} {sig['name']}: {sig['signal']} — {sig['reason']}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error generating signals: {e}"
+
+
+@tool
+def get_options_price(spot: float, strike: float, expiry_years: float,
+                      volatility: float = 0.25, rate: float = 0.05,
+                      option_type: str = "call") -> str:
+    """
+    Price a European option using the Black-Scholes model.
+    Parameters:
+      - spot: Current stock price (e.g. 2500.0)
+      - strike: Strike price (e.g. 2600.0)
+      - expiry_years: Time to expiry in years (e.g. 0.25 for 3 months)
+      - volatility: Annual volatility as decimal (e.g. 0.25 for 25%)
+      - rate: Risk-free rate (e.g. 0.065 for 6.5%)
+      - option_type: 'call' or 'put'
+    Returns option price and all Greeks (Delta, Gamma, Theta, Vega, Rho).
+    """
+    try:
+        from backend.options_pricing import black_scholes
+        result = black_scholes(spot, strike, expiry_years, rate, volatility, option_type)
+        lines = [
+            f"**{option_type.upper()} Option Pricing (Black-Scholes)**",
+            f"  Spot: ₹{spot}, Strike: ₹{strike}, Expiry: {expiry_years:.2f}y",
+            f"  Volatility: {volatility*100:.1f}%, Risk-free Rate: {rate*100:.1f}%",
+            f"\n  💰 **Price: ₹{result['price']:.4f}**",
+            f"\n  Greeks:",
+            f"    Δ Delta: {result['delta']:.4f}",
+            f"    Γ Gamma: {result['gamma']:.6f}",
+            f"    Θ Theta: {result['theta']:.4f} (per day)",
+            f"    ν Vega:  {result['vega']:.4f} (per 1% vol change)",
+            f"    ρ Rho:   {result['rho']:.4f}",
+        ]
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error pricing option: {e}"
+
+
+@tool
+def get_portfolio_optimization(symbols_csv: str, strategy: str = "max_sharpe") -> str:
+    """
+    Run Modern Portfolio Theory optimization on a set of stocks.
+    Parameters:
+      - symbols_csv: Comma-separated stock symbols (e.g. 'RELIANCE.NS,TCS.NS,HDFCBANK.NS,INFY.NS')
+      - strategy: One of 'max_sharpe', 'min_volatility', 'risk_parity', 'equal_weight'
+    Returns optimal weights, expected return, volatility, and Sharpe ratio.
+    """
+    try:
+        from backend.portfolio_optimizer import run_optimization
+        symbols = [s.strip() for s in symbols_csv.split(",") if s.strip()]
+        if len(symbols) < 2:
+            return "Need at least 2 stocks for portfolio optimization."
+
+        result = run_optimization(symbols, strategy=strategy, include_frontier=False)
+        optimal = result["optimal"]
+        lines = [
+            f"**Portfolio Optimization ({strategy.replace('_', ' ').title()})**",
+            f"\n📊 Optimal Weights:",
+        ]
+        for sym, w in optimal["weights"].items():
+            lines.append(f"  • {sym}: {w*100:.1f}%")
+        lines.extend([
+            f"\n📈 Expected Annual Return: {optimal['expected_return']*100:.2f}%",
+            f"📉 Annual Volatility: {optimal['volatility']*100:.2f}%",
+            f"✨ Sharpe Ratio: {optimal['sharpe_ratio']:.4f}",
+            f"⚠️ VaR (95%): {optimal['var_95']*100:.2f}%",
+            f"⚠️ CVaR (95%): {optimal['cvar_95']*100:.2f}%",
+            f"📉 Max Drawdown: {optimal['max_drawdown']*100:.2f}%",
+        ])
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error in optimization: {e}"
+
+
+@tool
+def get_commodity_price(commodity: str) -> str:
+    """
+    Get current price for a commodity.
+    Available: gold, silver, crude_oil, natural_gas, copper, platinum.
+    """
+    try:
+        from backend.multi_asset import get_all_commodities
+        commodities = get_all_commodities()
+        for c in commodities:
+            if c["id"] == commodity.lower() or commodity.lower() in c["name"].lower():
+                emoji = "🟢" if c["change"] >= 0 else "🔴"
+                return (
+                    f"**{c['name']}**: ${c['price']:.2f} {c['unit']}\n"
+                    f"{emoji} Change: ${c['change']:.2f} ({c['change_pct']:+.2f}%)"
+                )
+        available = ", ".join([c["id"] for c in commodities])
+        return f"Commodity not found. Available: {available}"
+    except Exception as e:
+        return f"Error fetching commodity: {e}"
+
+
+@tool
+def get_macro_data() -> str:
+    """
+    Get macroeconomic indicators and global market indices.
+    Returns key indices like NIFTY 50, S&P 500, VIX, plus Treasury yields.
+    """
+    try:
+        from backend.api_clients import MacroDataClient
+        indices = MacroDataClient.get_market_indices()
+        yields = MacroDataClient.get_treasury_yields()
+
+        lines = ["**Global Market Indices:**"]
+        for name, data in indices.items():
+            emoji = "🟢" if data["change"] >= 0 else "🔴"
+            lines.append(f"  {emoji} {name}: {data['price']:,.2f} ({data['change_pct']:+.2f}%)")
+
+        if yields:
+            lines.append("\n**US Treasury Yields:**")
+            for mat, val in yields.items():
+                if val is not None:
+                    lines.append(f"  • {mat}: {val:.3f}%")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error fetching macro data: {e}"

@@ -9,6 +9,11 @@ from backend.tools import (
     get_fundamental_analysis,
     get_sector_analysis,
     get_market_status,
+    get_trading_signals,
+    get_options_price,
+    get_portfolio_optimization,
+    get_commodity_price,
+    get_macro_data,
 )
 
 load_dotenv()
@@ -32,6 +37,11 @@ def get_agent_executor():
         get_fundamental_analysis,
         get_sector_analysis,
         get_market_status,
+        get_trading_signals,
+        get_options_price,
+        get_portfolio_optimization,
+        get_commodity_price,
+        get_macro_data,
     ]
     return create_react_agent(llm, tools)
 
@@ -41,7 +51,8 @@ def run_financial_agent(query: str) -> str:
         agent_executor = get_agent_executor()
 
         system_prompt = (
-            "You are an expert financial AI assistant specialising in Indian stock markets (NSE/BSE). "
+            "You are an expert financial AI assistant specialising in Indian stock markets (NSE/BSE) "
+            "and global financial markets. "
             "Your goal is to be as helpful as possible even when the user input is unclear. "
             "If a user asks about a stock or company but does not provide the exact ticker symbol, "
             "DO NOT ask them to clarify. Instead, intelligently infer the correct Yahoo Finance ticker "
@@ -52,6 +63,11 @@ def run_financial_agent(query: str) -> str:
             "Always mention prices in INR (₹). "
             "Use get_market_status to check if the market is open when timing is relevant. "
             "Use get_sector_analysis for sector-wide comparisons. "
+            "Use get_trading_signals to provide algorithmic buy/sell signals with confidence scores. "
+            "Use get_options_price to price options using Black-Scholes when asked about derivatives. "
+            "Use get_portfolio_optimization when asked about portfolio allocation or optimization. "
+            "Use get_commodity_price for gold, silver, crude oil, natural gas queries. "
+            "Use get_macro_data for global market overview, indices, and treasury yields. "
             "Always try to fulfill the request using the tools available."
         )
 
