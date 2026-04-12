@@ -4,28 +4,26 @@ Full-stack Indian stock market research platform with:
 
 - React frontend dashboard
 - FastAPI backend API
-- SQLite persistence for portfolio, watchlist, and profile
-- AI assistant for market queries
+- SQLAlchemy persistence (PostgreSQL/SQLite compatible) for portfolio, watchlist, and custom metrics
+- AI assistant for advanced market queries
 
 ## Highlights
 
-- Live NSE/BSE stock tracking (Yahoo Finance)
-- Technical indicators: RSI, MA20, MA50, Bollinger Bands
-- Stock comparison charts
-- Fundamentals and sector comparison views
-- Portfolio and watchlist management
-- News sentiment analysis (TextBlob)
-- Profile management with persistent settings
-- AI assistant endpoint for financial queries
-- Production-ready fixes for NaN/Infinity JSON values
-- Render deployment support (frontend + backend services)
+- **Live Market Tracking**: Real-time NSE/BSE stock tracking using a resilient, circuit-breaking unified API (Yahoo Finance & Alpha Vantage).
+- **Portfolio Optimization**: Modern Portfolio Theory (MPT) integration with Efficient Frontier rendering, Risk Parity, and Markowitz allocation models.
+- **Algorithmic Trading Signals**: Composite scoring engine processing 9 technical indicators (RSI, MACD, VWAP, Supertrend, etc.) into unified confidence metrics.
+- **Multi-Asset Framework**: Cross-asset analysis covering US Treasury Yield Curves, Commodities (Gold/Oil), Forex pairs, and asset correlation matrices.
+- **Options Pricing & Strategies**: Derivatives analysis using Black-Scholes and Binomial Tree models to compute Greeks and model Payoff P&L for multi-leg strategies (e.g. Iron Condor, Straddle).
+- **Real-Time Market Alerts**: Background evaluation engine for price breakouts, volume spikes, and technical crossover events with native notification support.
+- **AI Assistant**: LangGraph-powered AI endpoint enriched with tools to natively query portfolio optimization, options data, macro indicators, and technical signals conversationally.
+- **Production-Ready**: Robust error handling, NaN/Infinity JSON serialization fixes, and exponential backend retries.
 
 ## Tech Stack
 
-- Frontend: React, Axios, React Router, Recharts
-- Backend: FastAPI, Uvicorn, Pandas, yfinance, LangChain/LangGraph
-- Database: SQLite
-- Deployment: Render (Static Site + Web Service)
+- **Frontend**: React, Axios, React Router, Recharts
+- **Backend**: FastAPI, Uvicorn, Pandas, yfinance, aiohttp, scipy, numpy, SQLAlchemy, LangChain/LangGraph
+- **Database**: SQLite (local) / PostgreSQL (production ready)
+- **Deployment**: Render (Static Site + Web Service)
 
 ## Project Structure
 
@@ -33,8 +31,14 @@ Full-stack Indian stock market research platform with:
 .
 |- backend/
 |  |- main.py
-|  |- database.py
-|  |- fundamentals.py
+|  |- models.py
+|  |- api_clients.py
+|  |- error_handling.py
+|  |- portfolio_optimizer.py
+|  |- alerts.py
+|  |- multi_asset.py
+|  |- options_pricing.py
+|  |- algo_signals.py
 |  |- agent.py
 |  |- tools.py
 |  |- logger.py
@@ -44,8 +48,13 @@ Full-stack Indian stock market research platform with:
 |  |- src/
 |  |  |- api/index.js
 |  |  |- pages/
+|  |  |  |- Dashboard.jsx
+|  |  |  |- Optimizer.jsx
+|  |  |  |- Alerts.jsx
+|  |  |  |- MultiAsset.jsx
+|  |  |  |- Options.jsx
+|  |  |  |- Signals.jsx
 |  |  |- components/
-|- app.py
 |- start.sh
 |- README.md
 ```
@@ -64,7 +73,14 @@ Full-stack Indian stock market research platform with:
   - Example: `https://your-frontend-service.onrender.com`
   - Used for CORS allow-list.
 
-- `GOOGLE_API_KEY` (if AI agent features depend on Gemini in your setup)
+- `GOOGLE_API_KEY` 
+  - Required for the Gemini-powered AI agent features.
+  
+- `ALPHA_VANTAGE_API_KEY` (Optional)
+  - Used as an alternative/fallback data source.
+
+- `DATABASE_URL` (Optional)
+  - Connection string for PostgreSQL in production (defaults to local SQLite).
 
 ## Local Development
 
@@ -105,9 +121,10 @@ All backend routes are exposed under `/api`, for example:
 - `/api/market/status`
 - `/api/stocks/list`
 - `/api/stocks/{symbol}/price`
-- `/api/portfolio`
-- `/api/watchlist`
-- `/api/profile`
+- `/api/portfolio/optimize`
+- `/api/alerts`
+- `/api/options/price`
+- `/api/signals/{symbol}`
 - `/api/agent/chat`
 
 ## Render Deployment
@@ -131,7 +148,8 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 
 - Environment variables:
   - `FRONTEND_ORIGIN=https://your-frontend-service.onrender.com`
-  - `GOOGLE_API_KEY=...` (if needed)
+  - `GOOGLE_API_KEY=...`
+  - `DATABASE_URL=...`
 
 ### 2) Frontend (Static Site)
 
@@ -148,7 +166,7 @@ npm install ; npm run build
 
 ## Common Troubleshooting
 
-### 404 on `/market/status`, `/stocks/list`, etc.
+### 404 on API endpoints
 
 Cause: frontend API base is missing `/api`.
 
@@ -171,8 +189,3 @@ Check:
 - Frontend env var value is correct
 - Frontend was redeployed after env change
 - Backend service is healthy and responds at `/api/market/status`
-
-## Notes
-
-- The repository still contains `app.py` from the older Streamlit flow; active production UI is in `frontend/`.
-- Backend includes JSON sanitization for NaN/Infinity to prevent serialization crashes.
