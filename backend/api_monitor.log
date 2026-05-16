@@ -942,3 +942,141 @@
 2026-04-12 22:13:57,144 - INFO - API call made for INFY.NS with period 1mo
 2026-04-12 22:13:58,126 - INFO - API call made for TCS.NS with period 1mo
 2026-04-12 22:14:01,085 - INFO - API call made for ICICIBANK.NS with period 1mo
+2026-05-16 21:40:58,331 - INFO - Alert engine started (interval=60s)
+2026-05-16 21:41:06,587 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:41:07,907 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:41:08,599 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:41:09,114 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:41:09,730 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:41:10,234 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:43:59,813 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:44:01,144 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:44:02,018 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:44:02,773 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:44:38,373 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:44:39,835 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:46:46,136 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:46:47,369 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:46:47,990 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:46:48,768 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:46:49,289 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:46:49,749 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:25,436 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:48:26,147 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:48:26,662 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:48:27,803 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:48:28,823 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:29,344 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:48:30,072 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:48:30,906 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:48:31,641 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:48:32,744 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:48:33,617 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:48:34,288 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:48:34,787 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:35,340 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:48:35,888 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:48:36,444 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:48:36,838 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:48:37,462 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:48:38,451 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:48:39,019 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:48:39,783 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:48:40,644 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:48:41,528 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:42,350 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:48:42,997 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:48:43,507 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:48:45,868 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:48:46,679 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:48:47,074 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:48:47,784 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:48:48,521 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:48:51,459 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:48:52,074 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:48:52,872 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:53,735 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:48:54,384 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:48:55,998 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:48:56,444 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:48:56,988 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:48:57,539 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:48:58,228 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:48:58,695 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:48:59,172 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:48:59,616 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:49:00,274 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:49:00,809 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:49:01,552 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:49:01,587 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:49:02,114 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:49:02,625 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:49:03,135 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:49:03,488 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:49:03,852 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:49:04,475 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:49:05,087 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:49:05,491 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:49:06,198 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:49:06,716 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:49:07,013 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:49:07,476 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:49:07,829 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:49:08,371 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:49:08,743 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:49:09,415 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:49:09,662 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:49:10,018 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:49:10,477 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:49:11,084 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:49:11,234 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:49:11,605 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:49:11,922 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:49:13,978 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:49:15,584 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:50:18,617 - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-05-16 21:50:30,617 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:50:31,256 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:50:31,781 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:50:32,220 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:50:32,693 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:50:33,141 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:50:33,560 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:50:34,077 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:50:34,560 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:50:35,092 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:50:35,497 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:50:35,822 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:50:36,189 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:50:36,446 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:50:36,939 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:50:37,300 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:50:37,726 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:50:38,146 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:51:44,036 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:51:44,852 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:51:45,513 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:51:45,999 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:51:46,397 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:51:46,961 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:51:47,457 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:51:47,895 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:51:48,503 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:51:48,926 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:51:49,415 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:51:49,948 - INFO - API call made for RELIANCE.NS with period 5d
+2026-05-16 21:51:50,245 - INFO - API call made for HDFCBANK.NS with period 5d
+2026-05-16 21:51:50,700 - INFO - API call made for SBIN.NS with period 5d
+2026-05-16 21:51:51,424 - ERROR - $LTIM.NS: possibly delisted; no price data found  (period=2d) (Yahoo error = "No data found, symbol may be delisted")
+2026-05-16 21:51:51,644 - INFO - API call made for INFY.NS with period 5d
+2026-05-16 21:51:52,141 - INFO - API call made for ICICIBANK.NS with period 5d
+2026-05-16 21:51:52,598 - INFO - API call made for ITC.NS with period 5d
+2026-05-16 21:51:52,946 - INFO - API call made for WIPRO.NS with period 5d
+2026-05-16 21:51:53,469 - INFO - API call made for RELIANCE.NS with period 1mo
+2026-05-16 21:51:53,904 - INFO - API call made for TCS.NS with period 5d
+2026-05-16 21:51:54,480 - INFO - API call made for WIPRO.NS with period 1mo
+2026-05-16 21:51:57,345 - INFO - API call made for TCS.NS with period 1mo
+2026-05-16 21:54:16,273 - INFO - Alert engine stopped
+2026-05-16 21:54:28,524 - INFO - Alert engine started (interval=60s)
+2026-05-16 21:54:28,631 - INFO - Alert engine stopped
+2026-05-16 21:54:39,547 - INFO - Alert engine started (interval=60s)
