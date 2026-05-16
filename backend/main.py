@@ -4,7 +4,7 @@ All endpoints: market, stocks, portfolio, watchlist, profile, agent,
                alerts, optimization, multi-asset, options, signals.
 """
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -54,6 +54,7 @@ from algo_signals import generate_signals, get_signal_summary, batch_signals
 from api_clients import (
     YFinanceClient, AlphaVantageClient, MacroDataClient, ExchangeRateClient,
     get_price_with_fallback, get_forex_with_fallback,
+    cache_get, cache_set,
 )
 
 # ── Profile DB (SQLite — legacy, keep for compatibility) ──────────────────────
@@ -88,7 +89,24 @@ def init_profile_table():
     conn.commit()
     conn.close()
 
-app = FastAPI(title="Financial Research AI", version="3.0")
+# ── API Key Authentication ─────────────────────────────────────────────────────
+
+_API_KEY = os.getenv("API_KEY", "")
+
+
+async def verify_api_key(request: Request):
+    """Global auth dependency. Skipped when API_KEY env var is empty (local dev)."""
+    if _API_KEY:
+        key = request.headers.get("X-API-Key", "")
+        if key != _API_KEY:
+            raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
+
+app = FastAPI(
+    title="Financial Research AI",
+    version="3.0",
+    dependencies=[Depends(verify_api_key)],
+)
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "").rstrip("/")
 ALLOW_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -157,8 +175,14 @@ def market_status():
     return is_market_open()
 
 @app.get("/api/market/overview")
-def market_overview():
-    return get_market_overview()
+async def market_overview():
+    cache_key = "finai:market:overview"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+    data = get_market_overview()
+    await cache_set(cache_key, data, ttl=120)
+    return data
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # STOCKS
@@ -182,7 +206,11 @@ def validate_stock_symbol(symbol: str):
     return sym
 
 @app.get("/api/stocks/{symbol}/price")
-def stock_price(symbol: str, period: str = "1mo"):
+async def stock_price(symbol: str, period: str = "1mo"):
+    cache_key = f"finai:price:{symbol}:{period}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
     try:
         ticker = yf.Ticker(symbol)
         log_api_call(symbol, period)
@@ -223,7 +251,7 @@ def stock_price(symbol: str, period: str = "1mo"):
         change = safe_round(current - prev, 2) if current is not None and prev is not None else None
         pct = safe_round((change / prev) * 100, 2) if change is not None and prev else None
 
-        return {
+        response = {
             "symbol": symbol,
             "name": info.get("longName", symbol),
             "sector": get_sector(symbol),
@@ -238,6 +266,8 @@ def stock_price(symbol: str, period: str = "1mo"):
             "ma20": safe_round(data["MA20"].iloc[-1], 2),
             "candles": result,
         }
+        await cache_set(cache_key, response, ttl=300)
+        return response
     except HTTPException:
         raise
     except Exception as e:
@@ -246,10 +276,15 @@ def stock_price(symbol: str, period: str = "1mo"):
 
 
 @app.get("/api/stocks/{symbol}/fundamentals")
-def stock_fundamentals(symbol: str):
+async def stock_fundamentals(symbol: str):
+    cache_key = f"finai:fundamentals:{symbol}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
     data = get_fundamentals(symbol)
     if "Error" in data:
         raise HTTPException(status_code=500, detail=data["Error"])
+    await cache_set(cache_key, data, ttl=1800)
     return data
 
 
@@ -284,8 +319,11 @@ def sector_comparison(sector: str):
 def stock_news(symbol: str):
     import requests as req
     from textblob import TextBlob
+    _newsapi_key = os.getenv("NEWSAPI_KEY", "")
     name = INDIAN_STOCKS.get(symbol, (symbol,""))[0]
-    url = f"https://newsapi.org/v2/everything?q={name}&pageSize=8&apiKey=7b74b92a008c43d7a0e8fc6f8712d2f2"
+    if not _newsapi_key:
+        return {"articles": [], "sentiment": 0, "error": "NEWSAPI_KEY not configured"}
+    url = f"https://newsapi.org/v2/everything?q={name}&pageSize=8&apiKey={_newsapi_key}"
     try:
         resp = req.get(url, timeout=8).json()
         if resp.get("status") != "ok":
@@ -708,10 +746,15 @@ def options_iv(market_price: float, spot: float, strike: float,
 # TRADING SIGNALS
 # ═══════════════════════════════════════════════════════════════════════════════
 @app.get("/api/signals/{symbol}")
-def signals_full(symbol: str, period: str = "6mo"):
+async def signals_full(symbol: str, period: str = "6mo"):
+    cache_key = f"finai:signals:{symbol}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
     result = generate_signals(symbol, period)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
+    await cache_set(cache_key, result, ttl=600)
     return result
 
 @app.get("/api/signals/{symbol}/summary")

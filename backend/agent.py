@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
@@ -17,6 +18,15 @@ from backend.tools import (
 )
 
 load_dotenv()
+
+_logger = logging.getLogger("finai.agent")
+
+# Warn on startup if LangSmith tracing is not enabled
+if not os.environ.get("LANGCHAIN_TRACING_V2", "").lower() in ("true", "1"):
+    _logger.warning(
+        "LangSmith tracing is disabled. Set LANGCHAIN_TRACING_V2=true and "
+        "LANGCHAIN_API_KEY to enable agent observability in production."
+    )
 
 
 def get_agent_executor():
@@ -78,15 +88,18 @@ def run_financial_agent(query: str) -> str:
             ]
         })
 
-        content = response["messages"][-1].content
-        if isinstance(content, list):
-            texts = [
-                part["text"]
-                for part in content
-                if isinstance(part, dict) and "text" in part
-            ]
-            return "\n".join(texts) if texts else str(content)
-        return str(content)
+        try:
+            content = response["messages"][-1].content
+            if isinstance(content, list):
+                texts = [
+                    part["text"]
+                    for part in content
+                    if isinstance(part, dict) and "text" in part
+                ]
+                return "\n".join(texts) if texts else str(content)
+            return str(content)
+        except (KeyError, IndexError, AttributeError) as e:
+            return f"Agent completed but response could not be parsed: {e}"
 
     except ValueError as e:
         return f"Configuration Error: {e}"

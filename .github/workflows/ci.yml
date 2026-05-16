@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "001-financial-research-platform"]
+  pull_request:
+
+jobs:
+  backend-test:
+    name: Backend Tests (Python 3.12)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run tests
+        run: pytest backend/tests/ -v --tb=short
+        env:
+          DATABASE_URL: "sqlite:///./test.db"
+          API_KEY: ""
+          GOOGLE_API_KEY: ""
+          REDIS_URL: ""
+          NEWSAPI_KEY: ""
+          ALPHA_VANTAGE_API_KEY: ""
+
+  frontend-test:
+    name: Frontend Tests (Node 18)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Run tests
+        run: cd frontend && npm test -- --watchAll=false --passWithNoTests
+        env:
+          CI: true

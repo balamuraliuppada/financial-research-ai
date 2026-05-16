@@ -1,6 +1,12 @@
 .env
+backend/.env
 venv/
 .streamlit/
 .vscode/
 frontend/node_modules/
 backend/.env/
+*.db
+financial_ai.db
+__pycache__/
+*.pyc
+.pytest_cache/

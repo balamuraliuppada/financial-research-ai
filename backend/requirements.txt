@@ -21,3 +21,5 @@ scipy
 numpy
 aiohttp
 tenacity
+pytest
+httpx
