@@ -1,3 +1,4 @@
+import os
 import yfinance as yf
 from textblob import TextBlob
 import requests
@@ -22,7 +23,10 @@ def get_stock_price(symbol: str, period: str = "1mo") -> str:
 @tool
 def get_news_sentiment(company_name: str) -> str:
     """Fetch the latest news sentiment for a given company name. The sentiment ranges from -1 (Negative) to 1 (Positive)."""
-    url = f"https://newsapi.org/v2/everything?q={company_name}&pageSize=5&apiKey=7b74b92a008c43d7a0e8fc6f8712d2f2"
+    _newsapi_key = os.getenv("NEWSAPI_KEY", "")
+    if not _newsapi_key:
+        return "News API key not configured. Set NEWSAPI_KEY environment variable."
+    url = f"https://newsapi.org/v2/everything?q={company_name}&pageSize=5&apiKey={_newsapi_key}"
     try:
         response = requests.get(url)
         news_data = response.json()

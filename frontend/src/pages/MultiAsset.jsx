@@ -113,7 +113,7 @@ function CommoditiesTab() {
           <div key={c.id} className={`commodity-card ${selected === c.id ? 'selected' : ''}`}
                onClick={() => setSelected(c.id)}>
             <div className="commodity-name">{c.name}</div>
-            <div className="commodity-price">${c.price.toLocaleString()}</div>
+            <div className="commodity-price">{c.price != null ? `$${c.price.toLocaleString()}` : 'Data unavailable'}</div>
             <div className={`commodity-change ${c.change >= 0 ? 'up' : 'down'}`}>
               {c.change >= 0 ? '▲' : '▼'} ${Math.abs(c.change)} ({c.change_pct.toFixed(2)}%)
             </div>

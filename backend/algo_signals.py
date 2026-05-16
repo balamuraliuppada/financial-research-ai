@@ -290,8 +290,14 @@ def generate_signals(symbol: str, period: str = "6mo") -> Dict:
     try:
         ticker = yf.Ticker(symbol)
         data = ticker.history(period=period)
-        if data.empty or len(data) < 50:
-            return {"error": f"Insufficient data for {symbol} (need 50+ days)"}
+        if data.empty or len(data) < 30:
+            return {
+                "symbol": symbol,
+                "composite": "HOLD",
+                "confidence": 0,
+                "indicators": {},
+                "note": f"Insufficient data for {symbol} (need 30+ days of history)",
+            }
 
         close = data["Close"]
 

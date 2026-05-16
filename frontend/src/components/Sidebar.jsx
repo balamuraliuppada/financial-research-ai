@@ -44,6 +44,11 @@ export default function Sidebar({ active, onNav, profile }) {
         })}
       </nav>
 
+      {/* Disclaimer */}
+      <div style={{ padding: '8px 16px', fontSize: 10, color: 'var(--text-3, #666)', lineHeight: 1.4, borderTop: '1px solid var(--border, #333)' }}>
+        For informational purposes only. Not investment advice.
+      </div>
+
       {/* Profile Preview */}
       <div className="sidebar-footer" onClick={() => onNav('profile')}>
         <div className="avatar-sm" style={{ background: avatarColor }}>

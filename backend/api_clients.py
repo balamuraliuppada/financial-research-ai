@@ -8,6 +8,7 @@ Fallback chains: yfinance → Alpha Vantage for prices.
 """
 
 import os
+import json
 import time
 import logging
 import requests
@@ -51,7 +52,51 @@ for name in _breakers:
 # ─── API Keys ─────────────────────────────────────────────────────────────────
 
 ALPHA_VANTAGE_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
-NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "7b74b92a008c43d7a0e8fc6f8712d2f2")
+NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
+
+# ─── Redis Cache Helpers ──────────────────────────────────────────────────────
+
+_redis_client = None
+
+
+async def _get_redis():
+    """Lazy-initialise async Redis client. Returns None when REDIS_URL is unset."""
+    global _redis_client
+    redis_url = os.getenv("REDIS_URL", "")
+    if not redis_url:
+        return None
+    if _redis_client is None:
+        try:
+            import redis.asyncio as aioredis
+            _redis_client = aioredis.from_url(redis_url, decode_responses=True)
+        except Exception as e:
+            logger.warning(f"Redis init failed: {e}")
+            return None
+    return _redis_client
+
+
+async def cache_get(key: str):
+    """Return cached dict for key, or None on cache miss / Redis unavailable."""
+    try:
+        r = await _get_redis()
+        if r is None:
+            return None
+        val = await r.get(key)
+        return json.loads(val) if val else None
+    except Exception as e:
+        logger.debug(f"Cache get failed for {key}: {e}")
+        return None
+
+
+async def cache_set(key: str, value, ttl: int = 300):
+    """Store value as JSON in Redis with TTL seconds. Silently skips if unavailable."""
+    try:
+        r = await _get_redis()
+        if r is None:
+            return
+        await r.setex(key, ttl, json.dumps(value, default=str))
+    except Exception as e:
+        logger.debug(f"Cache set failed for {key}: {e}")
 
 
 def _check_rate_limit(api_name: str):

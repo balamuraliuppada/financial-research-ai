@@ -309,6 +309,9 @@ def run_optimization(symbols: List[str], strategy: str = "max_sharpe",
     Full optimization pipeline.
     Returns optimal weights, metrics, efficient frontier, and simulation data.
     """
+    if len(symbols) < 2:
+        raise ValueError("At least 2 symbols required for optimization")
+
     # 1. Fetch returns
     returns = fetch_returns(symbols, period)
     valid_symbols = list(returns.columns)

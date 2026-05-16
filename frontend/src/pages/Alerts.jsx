@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createAlert, getAlerts, deleteAlert, toggleAlert, getNotifications, markRead, getUnreadCount } from '../api';
+import { useToast } from '../context/ToastContext';
 
 const ALERT_TYPES = [
   { value: 'price_above', label: '📈 Price Above', desc: 'Triggers when price crosses above threshold' },
@@ -13,6 +14,9 @@ const ALERT_TYPES = [
 ];
 
 export default function Alerts({ stockList }) {
+  const showToast = useToast();
+  const wsRef = useRef(null);
+
   const [alerts, setAlerts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,40 @@ export default function Alerts({ stockList }) {
 
   useEffect(() => {
     Promise.all([fetchAlerts(), fetchNotifications()]).finally(() => setLoading(false));
+
+    // ── WebSocket: real-time alert push ─────────────────────────────────────
+    const wsUrl = (process.env.REACT_APP_API_BASE || 'http://localhost:8000/api')
+      .replace(/^http/, 'ws')
+      .replace('/api', '') + '/ws/alerts';
+
+    const connect = () => {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'alert_triggered') {
+            showToast(`🔔 ${msg.symbol}: ${msg.message}`, 'success');
+            fetchAlerts();
+            fetchNotifications();
+          }
+        } catch (_) {}
+      };
+
+      ws.onclose = () => {
+        // Reconnect after 5 seconds if closed unexpectedly
+        setTimeout(connect, 5000);
+      };
+
+      ws.onerror = () => ws.close();
+    };
+
+    connect();
+
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+    };
   }, []);
 
   const handleCreate = async () => {

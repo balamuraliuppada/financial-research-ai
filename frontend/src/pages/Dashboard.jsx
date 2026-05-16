@@ -327,7 +327,7 @@ export default function Dashboard({ stockList }) {
             {stockData && (
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 700, color: 'var(--text-1)' }}>
-                  ₹{stockData.current_price.toLocaleString('en-IN')}
+                  {stockData.current_price != null ? `₹${stockData.current_price.toLocaleString('en-IN')}` : '—'}
                 </div>
                 <div className={`flex gap-6 items-center justify-end mt-4 ${stockData.change >= 0 ? 'price-pos' : 'price-neg'}`}>
                   {stockData.change >= 0 ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
