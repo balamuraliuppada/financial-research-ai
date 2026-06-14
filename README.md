@@ -73,9 +73,8 @@ Full-stack Indian stock market research platform with:
   - Example: `https://your-frontend-service.onrender.com`
   - Used for CORS allow-list.
 
-- `GOOGLE_API_KEY` 
+- `GOOGLE_API_KEY`
   - Required for the Gemini-powered AI agent features.
-  
 - `ALPHA_VANTAGE_API_KEY` (Optional)
   - Used as an alternative/fallback data source.
 
@@ -113,6 +112,51 @@ cd frontend
 npm install
 npm start
 ```
+
+### Windows (PowerShell) Quickstart
+
+If you don't use Bash/WSL, run backend and frontend separately in PowerShell:
+
+Backend (PowerShell):
+
+```powershell
+cd E:\Capabl\financial-research-ai
+python -m venv .venv
+. .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install --no-cache-dir --retries 10 --timeout 120 -r backend\requirements.txt
+copy backend\.env.example backend\.env   # edit backend\.env as needed
+cd backend
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Frontend (PowerShell):
+
+```powershell
+cd E:\Capabl\financial-research-ai\frontend
+npm install
+$env:PORT='3000'
+$env:BROWSER='none'
+npm start
+```
+
+### Checking Redis cache
+
+If `REDIS_URL` is configured the backend uses Redis for caching (API key pattern: `finai:price:{SYMBOL}:{PERIOD}`). Quick Python check:
+
+```python
+import os, json, redis
+REDIS_URL = os.getenv('REDIS_URL','redis://localhost:6379/0')
+r = redis.from_url(REDIS_URL, decode_responses=True)
+key = 'finai:price:RELIANCE.NS:1mo'
+print('exists:', bool(r.exists(key)))
+print('ttl:', r.ttl(key))
+print(r.get(key))
+```
+
+### CI
+
+The repository contains a GitHub Actions workflow at `.github/workflows/ci.yml` which runs backend tests (Python) and frontend tests + build. Backend test reports are uploaded as artifacts for debugging.
 
 ## API Base Path
 

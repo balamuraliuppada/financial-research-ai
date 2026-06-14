@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "001-financial-research-platform"]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -19,17 +19,19 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt
+        run: pip install --no-cache-dir -r backend/requirements.txt
 
       - name: Run tests
-        run: pytest backend/tests/ -v --tb=short
+        run: pytest backend/tests/ -v --tb=short --junitxml=results/backend-junit.xml
         env:
           DATABASE_URL: "sqlite:///./test.db"
-          API_KEY: ""
-          GOOGLE_API_KEY: ""
-          REDIS_URL: ""
-          NEWSAPI_KEY: ""
-          ALPHA_VANTAGE_API_KEY: ""
+
+      - name: Upload backend test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: results/backend-junit.xml
 
   frontend-test:
     name: Frontend Tests (Node 18)
@@ -49,5 +51,12 @@ jobs:
 
       - name: Run tests
         run: cd frontend && npm test -- --watchAll=false --passWithNoTests
+        env:
+          CI: true
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build --if-present
         env:
           CI: true
