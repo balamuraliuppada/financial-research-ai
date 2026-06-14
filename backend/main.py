@@ -127,8 +127,10 @@ async def startup():
     create_table()
     init_profile_table()
     init_db()
+
     if os.getenv("TESTING") != "true":
         await alert_engine.start()
+
 
 @app.on_event("shutdown")
 async def shutdown():
