@@ -95,10 +95,6 @@ _API_KEY = os.getenv("API_KEY", "")
 
 
 async def verify_api_key(request: Request):
-
-    if os.getenv("TESTING") == "true":
-        return
-
     if _API_KEY:
         key = request.headers.get("X-API-Key", "")
         if key != _API_KEY:
