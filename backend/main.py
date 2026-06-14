@@ -127,11 +127,13 @@ async def startup():
     create_table()
     init_profile_table()
     init_db()
-    await alert_engine.start()
+    if os.getenv("TESTING") != "true":
+        await alert_engine.start()
 
 @app.on_event("shutdown")
 async def shutdown():
-    await alert_engine.stop()
+    if os.getenv("TESTING") != "true":
+        await alert_engine.stop()
 
 
 def json_safe(value):
